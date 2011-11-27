@@ -6,6 +6,9 @@
 #include "Grub4WinDlg.h"
 #include <PROCESS.H>
 #include "ExtractFile.h"
+#include <aerosubc.h>
+#include <aaeroint.h>
+#include <aeroglss.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -31,10 +34,13 @@ public:
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 	//}}AFX_VIRTUAL
+	virtual BOOL OnInitDialog();
+	void ApplyAeroGlass(CDC *pDC) const;
 
 // Implementation
 protected:
 	//{{AFX_MSG(CAboutDlg)
+	afx_msg void OnPaint();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };
@@ -52,9 +58,93 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 	//}}AFX_DATA_MAP
 }
 
+BOOL CAboutDlg::OnInitDialog()
+{
+	CDialog::OnInitDialog();
+	// Aero effect subclass
+	if(!AeroAutoSubclass(m_hWnd, ASC_NO_FRAME_EXTENSION, 0L))
+    {
+        TRACE(_T("Failed to autosubclass with %lu\n"), GetLastError());
+    }
+    else
+    {
+        /// 
+        /// loop over the controls outside the placeholder control
+        /// and let autoaero subclass them:
+        /// 
+		static const UINT dwAeroCtrlIds[] = 
+		{
+			IDOK,
+			IDC_STATIC_ABOUT1,
+			IDC_STATIC_ABOUT2,
+		};
+
+        size_t stIdx = 0;
+#ifndef dimof
+#define dimof(a) (sizeof(a) / sizeof(a[0]))
+#endif
+        for (; stIdx < dimof(dwAeroCtrlIds); stIdx++)
+        {
+            HWND hCtrl = ::GetDlgItem(m_hWnd, dwAeroCtrlIds[stIdx]);
+            ASSERT(hCtrl);
+            VERIFY(AeroSubClassCtrl(hCtrl));    
+        }
+    }
+	return TRUE;
+}
+
+void CAboutDlg::OnPaint() 
+{
+	CPaintDC dc(this); // device context for painting
+	
+	// TODO: Add your message handler code here
+	if(!IsIconic())
+        ApplyAeroGlass(&dc);
+	
+	// Do not call CDialog::OnPaint() for painting messages
+}
+
+void CAboutDlg::ApplyAeroGlass(CDC *pDC) const
+{
+    RECT rcPlaceholder;
+    ASSERT(pDC);
+    RECT rcClient;
+    GetClientRect(&rcClient);
+	
+    MARGINS marGlassInset = {-1, -1, -1, -1}; 
+    GetDlgItem(IDC_STATIC_PLACE_HOLDER)->GetWindowRect(&rcPlaceholder);
+    ::ScreenToClient(m_hWnd, &rcPlaceholder);
+    marGlassInset.cxLeftWidth = rcPlaceholder.left;
+    marGlassInset.cxRightWidth = rcClient.right - rcPlaceholder.right;
+    marGlassInset.cyBottomHeight = rcClient.bottom - rcPlaceholder.bottom;
+    marGlassInset.cyTopHeight = rcPlaceholder.top;
+	
+	
+	
+    CDwmApiImpl dwmApi;
+    if (dwmApi.Initialize() && dwmApi.IsDwmCompositionEnabled() && 
+        SUCCEEDED(dwmApi.DwmExtendFrameIntoClientArea(m_hWnd, &marGlassInset)))
+    {
+        RECT rcScratch = rcClient;
+        rcScratch.right = marGlassInset.cxLeftWidth;
+        pDC->PatBlt(rcScratch.left, rcScratch.top, RECTWIDTH(rcScratch), RECTHEIGHT(rcScratch), BLACKNESS);
+        rcScratch = rcClient;
+        rcScratch.bottom = marGlassInset.cyTopHeight;
+        pDC->PatBlt(rcScratch.left, rcScratch.top, RECTWIDTH(rcScratch), RECTHEIGHT(rcScratch), BLACKNESS);
+        
+        rcScratch = rcClient;
+        rcScratch.left = rcScratch.right - marGlassInset.cxRightWidth;
+        pDC->PatBlt(rcScratch.left, rcScratch.top, RECTWIDTH(rcScratch), RECTHEIGHT(rcScratch), BLACKNESS);
+        
+        rcScratch = rcClient;
+        rcScratch.top = rcScratch.bottom - marGlassInset.cyBottomHeight;
+        pDC->PatBlt(rcScratch.left, rcScratch.top, RECTWIDTH(rcScratch), RECTHEIGHT(rcScratch), BLACKNESS);
+    }
+}
+
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialog)
 	//{{AFX_MSG_MAP(CAboutDlg)
-		// No message handlers
+	ON_WM_PAINT()
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -163,6 +253,12 @@ BOOL CGrub4WinDlg::OnInitDialog()
 
 	// Update control status
 	UpdateCtrlStatus();
+
+	// Aero effect subclass
+	if(!AeroAutoSubclass(m_hWnd, ASC_SUBCLASS_ALL_CONTROLS, 0L))
+    {
+        TRACE(_T("Failed to autosubclass with %lu.\n"), GetLastError());
+    }
 	
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -270,36 +366,60 @@ void CGrub4WinDlg::UpdateCtrlStatus()
 		/* Set control window text */
 		strText.LoadString(IDS_CHOOSE_DRV);
 		GetDlgItem(IDC_STATIC_DRV)->SetWindowText(strText);
+		InvalidateCtrl(IDC_STATIC_DRV);
+
 		strText.LoadString(IDS_READY);
 		GetDlgItem(IDC_STATIC_STATUS)->SetWindowText(strText);
+		InvalidateCtrl(IDC_STATIC_STATUS);
+
 		strText.LoadString(IDS_EXEC_INSTALL);
-		GetDlgItem(IDC_BUTTON_EXEC)->SetWindowText(strText);		
+		GetDlgItem(IDC_BUTTON_EXEC)->SetWindowText(strText);
+		//InvalidateCtrl(IDC_BUTTON_EXEC);
 
 		/* Enable or disable control */
 		m_drvListCombo.EnableWindow(TRUE);
+		InvalidateCtrl(IDC_COMBO_DRV);
 		GetDlgItem(IDC_BUTTON_EXEC)->EnableWindow(TRUE);
+		InvalidateCtrl(IDC_BUTTON_EXEC);
 	}
 	else	// Installed
 	{
 		/* Set control window text */
 		strText.LoadString(IDS_INSTALLED_DRV);
 		GetDlgItem(IDC_STATIC_DRV)->SetWindowText(strText);
+		InvalidateCtrl(IDC_STATIC_DRV);
+
 		strText.LoadString(IDS_READY);
 		GetDlgItem(IDC_STATIC_STATUS)->SetWindowText(strText);
+		InvalidateCtrl(IDC_STATIC_STATUS);
+
 		strText.LoadString(IDS_EXEC_UNINSTALL);
 		GetDlgItem(IDC_BUTTON_EXEC)->SetWindowText(strText);
+		//InvalidateCtrl(IDC_BUTTON_EXEC);
 		
 		/* Enable or disable control */
 		m_drvListCombo.EnableWindow(FALSE);
+		InvalidateCtrl(IDC_COMBO_DRV);
 		GetDlgItem(IDC_BUTTON_EXEC)->EnableWindow(TRUE);
+		InvalidateCtrl(IDC_BUTTON_EXEC);
 	}	
 	GetDlgItem(IDOK)->EnableWindow(TRUE);
+	InvalidateCtrl(IDOK);
 }
 
-void CGrub4WinDlg::ProcessExitCode(ExitCode_t code)
+void CGrub4WinDlg::InvalidateCtrl(DWORD dwCtrlId)
+{
+	CWnd* pCtrl = GetDlgItem(dwCtrlId);
+	CRect rc;
+	pCtrl->GetWindowRect(rc);
+	ScreenToClient(rc);
+	InvalidateRect(rc);
+}
+
+void CGrub4WinDlg::ProcessExitCode(RUNSISI_HUST::ExitCode_t code)
 {
 	CString strText;
-	if (code == Success)
+	if (code == RUNSISI_HUST::Success)
 	{
 		strText.LoadString(IDS_SUCCESS);
 	}
@@ -307,19 +427,19 @@ void CGrub4WinDlg::ProcessExitCode(ExitCode_t code)
 	{	
 		strText.LoadString(IDS_FAILURE);
 		CString strTmp;
-		if (code == FileNotFound)
+		if (code == RUNSISI_HUST::FileNotFound)
 		{
 			strTmp.LoadString(IDS_FILENOTFIND);
 			strText += _T(": ");
 			strText += strTmp;
 		}
-		else if (code == NotSupportedSystem)
+		else if (code == RUNSISI_HUST::NotSupportedSystem)
 		{
 			strTmp.LoadString(IDS_NOT_SUPPORTED_SYSTEM);
 			strText += _T(": ");
 			strText += strTmp;
 		}
-		else if (code == InvalidParameter)
+		else if (code == RUNSISI_HUST::InvalidParameter)
 		{
 			strTmp.LoadString(IDS_INVALID_PARAMETER);
 			strText += _T(": ");
@@ -327,6 +447,7 @@ void CGrub4WinDlg::ProcessExitCode(ExitCode_t code)
 		}
 	}
 	GetDlgItem(IDC_STATIC_RESULT)->SetWindowText(strText);
+	InvalidateCtrl(IDC_STATIC_RESULT);
 }
 
 void CGrub4WinDlg::OnButtonExec() 
@@ -375,9 +496,13 @@ void CGrub4WinDlg::OnButtonExec()
 		bOk = FALSE;
 		// We are processing, update control status temporally
 		GetDlgItem(IDC_COMBO_DRV)->EnableWindow(FALSE);
+		InvalidateCtrl(IDC_COMBO_DRV);
 		GetDlgItem(IDC_BUTTON_EXEC)->EnableWindow(FALSE);
+		InvalidateCtrl(IDC_BUTTON_EXEC);
 		GetDlgItem(IDOK)->EnableWindow(FALSE);
-		GetDlgItem(IDC_STATIC_RESULT)->SetWindowText(_T(""));
+		InvalidateCtrl(IDOK);
+		GetDlgItem(IDC_STATIC_RESULT)->SetWindowText(_T("                   "));
+		InvalidateCtrl(IDC_STATIC_RESULT);
 
 
 		/* Launch child process */
@@ -404,6 +529,7 @@ void CGrub4WinDlg::OnButtonExec()
 		CString strText;
 		strText.LoadString(IDS_LAUNCH_FAILURE);
 		GetDlgItem(IDC_STATIC_RESULT)->SetWindowText(strText);
+		InvalidateCtrl(IDC_STATIC_RESULT);
 
 		/* Create file failed or launch child process failed, update control status */
 		UpdateCtrlStatus();
@@ -435,6 +561,7 @@ LRESULT CGrub4WinDlg::OnProcessing(WPARAM wParam, LPARAM lParam)
 		status->SetWindowText(_T("..."));
 		iDot = 0;
 	}
+	InvalidateCtrl(IDC_STATIC_STATUS);
 
 	return 0;
 }
@@ -445,7 +572,7 @@ LRESULT CGrub4WinDlg::OnProcessFinished(WPARAM wParam, LPARAM lParam)
 	DWORD dwExitCode = (DWORD)wParam;
 	
 	/* Process exit code */
-	ProcessExitCode((ExitCode_t)dwExitCode);
+	ProcessExitCode((RUNSISI_HUST::ExitCode_t)dwExitCode);
 
 	/* Close monitor thread handle */
 	CloseHandle(m_hThread);
@@ -546,10 +673,11 @@ BOOL CGrub4WinDlg::DelBackupDir(CString strPath)
 		}
 	} while (FindNextFile(hFindHandle, &findData));
 
-	RemoveDirectory(strPath);
-
 	// Close find handle
 	FindClose(hFindHandle);
+
+	RemoveDirectory(strPath);
+	
 	return TRUE;
 }
 

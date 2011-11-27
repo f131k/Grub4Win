@@ -57,12 +57,13 @@ protected:
 	void DetermineIfInstalled();						// Determine if we have already installed or not
 	BOOL SearchFileUnderAllRoot(LPCTSTR lpFileName);	// Return true on found
 	void UpdateCtrlStatus();							// Enable or disable controls
-	void ProcessExitCode(ExitCode_t code);				// Set info according child process exit code
+	void ProcessExitCode(RUNSISI_HUST::ExitCode_t code);				// Set info according child process exit code
 	BOOL CreateBackupDir(CString strPath);
 	BOOL ExtractBatFile(CString strPath);	
 	BOOL ExtractGrubFile(CString strPath);
 	BOOL DelBatFile(CString strPath);
 	BOOL DelBackupDir(CString strPath);
+	void InvalidateCtrl(DWORD dwCtrlId);				// Force the control to be repainted
 
 	// Generated message map functions
 	//{{AFX_MSG(CGrub4WinDlg)

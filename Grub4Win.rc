@@ -73,16 +73,18 @@ IDR_MAINFRAME           ICON    DISCARDABLE     "res\\Grub4Win.ico"
 // Dialog
 //
 
-IDD_ABOUTBOX DIALOG DISCARDABLE  0, 0, 211, 44
+IDD_ABOUTBOX DIALOG DISCARDABLE  0, 0, 211, 50
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "About Grub4Win"
 FONT 8, "MS Sans Serif"
 BEGIN
-    ICON            IDR_MAINFRAME,IDC_STATIC,11,11,21,20
-    LTEXT           "Grub4Win Version 1.0",IDC_STATIC,40,10,119,8,
+    LTEXT           "Grub4Win Version 1.0",IDC_STATIC_ABOUT1,48,9,92,8,
                     SS_NOPREFIX
-    LTEXT           "runsisi@HUST Copyright (C) 2011",IDC_STATIC,40,25,119,8
+    LTEXT           "runsisi@HUST Copyright (C) 2011",IDC_STATIC_ABOUT2,48,
+                    25,119,8
     DEFPUSHBUTTON   "OK",IDOK,154,7,50,14,WS_GROUP
+    GROUPBOX        "",IDC_STATIC_PLACE_HOLDER,7,7,33,27,NOT WS_VISIBLE
+    ICON            IDR_MAINFRAME,IDC_STATIC,14,10,20,20
 END
 
 IDD_GRUB4WIN_DIALOG DIALOGEX 0, 0, 178, 71
@@ -98,7 +100,7 @@ BEGIN
                     WS_VSCROLL | WS_TABSTOP
     LTEXT           "选择安装分区：",IDC_STATIC_DRV,18,13,64,8
     PUSHBUTTON      "安装",IDC_BUTTON_EXEC,52,45,50,14
-    LTEXT           "Static",IDC_STATIC_RESULT,18,30,153,8
+    LTEXT           "Static",IDC_STATIC_RESULT,18,30,146,8
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,17,40,147,1
 END
 
@@ -110,8 +112,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,1
- PRODUCTVERSION 1,0,0,1
+ FILEVERSION 1,0,0,2
+ PRODUCTVERSION 1,0,0,2
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -129,14 +131,14 @@ BEGIN
             VALUE "Comments", "http://www.cppblog.com/runsisi\0"
             VALUE "CompanyName", "runsisi@163.com\0"
             VALUE "FileDescription", "Windows下安装GRUB\0"
-            VALUE "FileVersion", "1, 0, 0, 1\0"
+            VALUE "FileVersion", "1, 0, 0, 2\0"
             VALUE "InternalName", "Grub4Win\0"
             VALUE "LegalCopyright", "runsisi@163.com Copyright (C) 2011\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "Grub4Win.EXE\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "Grub4Win\0"
-            VALUE "ProductVersion", "1, 0, 0, 1\0"
+            VALUE "ProductVersion", "1, 0, 0, 2\0"
             VALUE "SpecialBuild", "\0"
         END
     END
@@ -162,7 +164,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 204
         TOPMARGIN, 7
-        BOTTOMMARGIN, 37
+        BOTTOMMARGIN, 43
     END
 
     IDD_GRUB4WIN_DIALOG, DIALOG

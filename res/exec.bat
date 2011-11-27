@@ -76,23 +76,28 @@ if defined dummy (
 	goto exit1
 )
 
-:: Backup the files with the same name
-call :backup_file %ldr% %ldr.mbr% %menu.lst%
-
 :: Do not add more than two line comments under if statement!
 :: Do not add comment at the last line of else statement!
 :: Pay attention to variable expansion!!!
 :: TODO: When to use !var! and when to use %var%?
 :: Back up the original boot info
 if %OS% == XP (
+	:: Backup the files with the same name
+	call :backup_file_xp %ldr% %ldr.mbr% %menu.lst%
 	:: Backup boot.ini
 	call :del_system_attrib %root%boot.ini
 	copy /y %root%boot.ini %drv%:\%backup_dir%\%backup_boot_file%
 	:: Edit boot.ini
 	echo,>>%root%boot.ini
-	echo,%drv%:\grldr.mbr=%title%>>%root%boot.ini
+	echo,%root%grldr.mbr=%title%>>%root%boot.ini
 	call :add_system_attrib %root%boot.ini
+	:: Copy grub4dos files to destination drive root
+	call :copy_grub_file_xp %ldr% %ldr.mbr% %menu.lst%
+	:: %drv%:\%menu.lst% will have normal attribute
+	call :add_system_attrib %root%%ldr% %root%%ldr.mbr%
 ) else (
+	:: Backup the files with the same name
+	call :backup_file_win7 %ldr% %ldr.mbr% %menu.lst%
 	bcdedit /export %drv%:\%backup_dir%\%backup_boot_file%
 	:: Add a new entry
 	for /f "tokens=1,2,3" %%b in ('bcdedit /create /d %title% /application bootsector') do (
@@ -106,12 +111,13 @@ if %OS% == XP (
 	bcdedit /set !id! device partition=%drv%:
 	bcdedit /set !id! path \%ldr.mbr%
 	bcdedit /displayorder !id! /addlast
+	:: Copy grub4dos files to destination drive root
+	call :copy_grub_file_win7 %ldr% %ldr.mbr% %menu.lst%
+	:: %drv%:\%menu.lst% will have normal attribute
+	call :add_system_attrib %drv%:\%ldr% %drv%:\%ldr.mbr%
 )
 
-:: Copy grub4dos files to destination drive root
-call :copy_grub_file %ldr% %ldr.mbr% %menu.lst%
-::  %drv%:\%menu.lst% will have normal attribute
-call :add_system_attrib %drv%:\%ldr% %drv%:\%ldr.mbr%
+
 :: Delete grub files
 call :del_grub_file %ldr% %ldr.mbr% %menu.lst%
 
@@ -125,20 +131,19 @@ if %OS% == XP (
 	call :del_system_attrib %root%boot.ini
 	move /y %drv%:\%backup_dir%\%backup_boot_file% %root%boot.ini
 	call :add_system_attrib %boot%boot.ini
+	:: Delete installed grub files
+	call :del_installed_grub_file_xp %ldr% %ldr.mbr% %menu.lst%
+	:: Restore backup files
+	call :restore_file_xp %ldr% %ldr.mbr% %menu.lst%
 ) else (
 	:: Import backuped bcd
 	bcdedit /import %drv%:\%backup_dir%\%backup_boot_file%
 	del %drv%:\%backup_dir%\%backup_boot_file%
-)
-
-:: Delete installed grub files
-call :del_installed_grub_file %ldr% %ldr.mbr% %menu.lst%
-
-:: Restore backup files
-call :restore_file %ldr% %ldr.mbr% %menu.lst%
-
-:: Delete bcd log file
-if %OS% == WIN7 (
+	:: Delete installed grub files
+	call :del_installed_grub_file_win7 %ldr% %ldr.mbr% %menu.lst%
+	:: Restore backup files
+	call :restore_file_win7 %ldr% %ldr.mbr% %menu.lst%
+	:: Delete bcd log file
 	call :del_boot_log
 )
 
@@ -158,7 +163,16 @@ goto :eof
 :: del has a switch to delete files with specific attribute
 :: Pay attention to the comment position, do not add more than two 
 :: line comments under if statement!
-:backup_file
+:backup_file_xp
+for %%i in (%*) do (
+	if exist %root%%%i (
+		call :del_system_attrib %root%%%i
+		move /y %root%%%i %drv%:\%backup_dir%\%%i%backup_postfix%
+	)
+)
+goto :eof
+
+:backup_file_win7
 for %%i in (%*) do (
 	if exist %drv%:\%%i (
 		call :del_system_attrib %drv%:\%%i
@@ -168,7 +182,16 @@ for %%i in (%*) do (
 goto :eof
 
 :: Restore backuped files which has the the same name with grub files
-:restore_file
+:restore_file_xp
+for %%i in (%*) do (
+	set file=%drv%:\%backup_dir%\%%i%backup_postfix%
+	if exist !file! (
+		move /y !file! %root%%%i
+	)
+)
+goto :eof
+
+:restore_file_win7
 for %%i in (%*) do (
 	set file=%drv%:\%backup_dir%\%%i%backup_postfix%
 	if exist !file! (
@@ -178,14 +201,29 @@ for %%i in (%*) do (
 goto :eof
 
 :: Copy grub files to target drive root
-:copy_grub_file
+:copy_grub_file_xp
+for %%i in (%*) do (
+	copy /y %%i %root%
+)
+goto :eof
+
+:copy_grub_file_win7
 for %%i in (%*) do (
 	copy /y %%i %drv%:\
 )
 goto :eof
 
 :: Delete grub files in installed target drive root
-:del_installed_grub_file
+:del_installed_grub_file_xp
+for %%i in (%*) do (
+	if exist %root%%%i (
+		call :del_system_attrib %root%%%i
+		del %root%%%i
+	)
+)
+goto :eof
+
+:del_installed_grub_file_win7
 for %%i in (%*) do (
 	if exist %drv%:\%%i (
 		call :del_system_attrib %drv%:\%%i

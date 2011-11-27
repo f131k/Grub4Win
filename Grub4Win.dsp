@@ -42,7 +42,7 @@ RSC=rc.exe
 # PROP Intermediate_Dir "Release"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_AFXDLL" /Yu"stdafx.h" /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /FR /Yu"stdafx.h" /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O2 /I "aerohdrs" /I "common" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /FR /Yu"stdafx.h" /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x804 /d "NDEBUG" /d "_AFXDLL"
@@ -67,7 +67,7 @@ LINK32=link.exe
 # PROP Intermediate_Dir "Debug"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_AFXDLL" /Yu"stdafx.h" /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /FR /Yu"stdafx.h" /FD /GZ /c
+# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "aerohdrs" /I "common" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /FR /Yu"stdafx.h" /FD /GZ /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x804 /d "_DEBUG" /d "_AFXDLL"
@@ -182,6 +182,147 @@ SOURCE=.\res\mbr.bin
 SOURCE=.\res\menu_lst.bin
 # End Source File
 # End Group
+# Begin Group "aerohdrs"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\aerohdrs\sal.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\aerohdrs\specstrings.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\aerohdrs\specstrings_adt.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\aerohdrs\specstrings_strict.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\aerohdrs\Uxtheme.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\aerohdrs\vsstyle.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\aerohdrs\vssym32.h
+# End Source File
+# End Group
+# Begin Group "common"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\common\aaeroint.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\common\aeroanim.cpp
+# SUBTRACT CPP /YX /Yc /Yu
+# End Source File
+# Begin Source File
+
+SOURCE=.\common\aerobutn.cpp
+# SUBTRACT CPP /YX /Yc /Yu
+# End Source File
+# Begin Source File
+
+SOURCE=.\common\aerocmbo.cpp
+# SUBTRACT CPP /YX /Yc /Yu
+# End Source File
+# Begin Source File
+
+SOURCE=.\common\aerodtpk.cpp
+# SUBTRACT CPP /YX /Yc /Yu
+# End Source File
+# Begin Source File
+
+SOURCE=.\common\aeroedit.cpp
+# SUBTRACT CPP /YX /Yc /Yu
+# End Source File
+# Begin Source File
+
+SOURCE=.\common\aeroglss.cpp
+# SUBTRACT CPP /YX /Yc /Yu
+# End Source File
+# Begin Source File
+
+SOURCE=.\common\aeroglss.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\common\aerohdr.cpp
+# SUBTRACT CPP /YX /Yc /Yu
+# End Source File
+# Begin Source File
+
+SOURCE=.\common\aeroipad.cpp
+# SUBTRACT CPP /YX /Yc /Yu
+# End Source File
+# Begin Source File
+
+SOURCE=.\common\aerolbox.cpp
+# SUBTRACT CPP /YX /Yc /Yu
+# End Source File
+# Begin Source File
+
+SOURCE=.\common\aerolctr.cpp
+# SUBTRACT CPP /YX /Yc /Yu
+# End Source File
+# Begin Source File
+
+SOURCE=.\common\aeroprgs.cpp
+# SUBTRACT CPP /YX /Yc /Yu
+# End Source File
+# Begin Source File
+
+SOURCE=.\common\aeroslid.cpp
+# SUBTRACT CPP /YX /Yc /Yu
+# End Source File
+# Begin Source File
+
+SOURCE=.\common\aerospin.cpp
+# SUBTRACT CPP /YX /Yc /Yu
+# End Source File
+# Begin Source File
+
+SOURCE=.\common\aerostat.cpp
+# SUBTRACT CPP /YX /Yc /Yu
+# End Source File
+# Begin Source File
+
+SOURCE=.\common\aerosubc.cpp
+# SUBTRACT CPP /YX /Yc /Yu
+# End Source File
+# Begin Source File
+
+SOURCE=.\common\aerosubc.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\common\aerotree.cpp
+# SUBTRACT CPP /YX /Yc /Yu
+# End Source File
+# Begin Source File
+
+SOURCE=.\common\p4710.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\common\safassrt.c
+# SUBTRACT CPP /YX /Yc /Yu
+# End Source File
+# Begin Source File
+
+SOURCE=.\common\safassrt.h
+# End Source File
+# End Group
 # Begin Source File
 
 SOURCE=.\res\grldr
@@ -201,6 +342,10 @@ SOURCE=.\res\menu.lst
 # Begin Source File
 
 SOURCE=.\ReadMe.txt
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\uac.manifest
 # End Source File
 # End Target
 # End Project

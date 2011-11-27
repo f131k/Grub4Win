@@ -9,10 +9,13 @@
 #define UWM_PROCESSING (WM_APP+44)
 #define UWM_PROCESS_FINISHED (UWM_PROCESSING+1)
 
-typedef enum tagExitCode
+namespace RUNSISI_HUST
 {
-	Success = 0, FileNotFound = 1, NotSupportedSystem = 2, InvalidParameter = 3, Unknown,
-} ExitCode_t;
+	typedef enum tagExitCode
+	{
+		Success = 0, FileNotFound = 1, NotSupportedSystem = 2, InvalidParameter = 3, Unknown,
+	} ExitCode_t;
+}
 
 typedef struct tagThreadParam
 {
