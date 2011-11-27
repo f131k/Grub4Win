@@ -93,8 +93,7 @@ if %OS% == XP (
 	call :add_system_attrib %root%boot.ini
 	:: Copy grub4dos files to destination drive root
 	call :copy_grub_file_xp %ldr% %ldr.mbr% %menu.lst%
-	:: %drv%:\%menu.lst% will have normal attribute
-	call :add_system_attrib %root%%ldr% %root%%ldr.mbr%
+	call :add_system_attrib %root%%ldr% %root%%ldr.mbr% %root%%menu.lst%
 ) else (
 	:: Backup the files with the same name
 	call :backup_file_win7 %ldr% %ldr.mbr% %menu.lst%
@@ -113,8 +112,7 @@ if %OS% == XP (
 	bcdedit /displayorder !id! /addlast
 	:: Copy grub4dos files to destination drive root
 	call :copy_grub_file_win7 %ldr% %ldr.mbr% %menu.lst%
-	:: %drv%:\%menu.lst% will have normal attribute
-	call :add_system_attrib %drv%:\%ldr% %drv%:\%ldr.mbr%
+	call :add_system_attrib %drv%:\%ldr% %drv%:\%ldr.mbr% %drv%:\%menu.lst%
 )
 
 

@@ -22,6 +22,9 @@
 #define MENU_LST _T("menu.lst")
 #define RC_TYPE _T("BINARY")
 
+#define VMLINUZ _T("vmlinuz")
+#define INITRD_LZ _T("initrd.lz")
+
 class CGrub4WinDlg : public CDialog
 {
 // Construction
@@ -31,6 +34,7 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CGrub4WinDlg)
 	enum { IDD = IDD_GRUB4WIN_DIALOG };
+	CComboBox	m_isoListCombo;
 	CComboBox	m_drvListCombo;
 	//}}AFX_DATA
 
@@ -43,27 +47,37 @@ public:
 // Implementation
 protected:
 	HICON m_hIcon;
-	BOOL m_bInstalled;			// Indicate if we have already installed or not
-	CString m_strBatName;		// The bat file name we want to execute
-	drv_list_t m_drvList;		// A list of fixed drive in current computer
-	CString m_strInstalledRoot;	// The drive where we have installed
+	BOOL m_bInstalled;				// Indicate if we have already installed or not
+	CString m_strBatName;			// The bat file name we want to execute
+	drv_list_t m_drvList;			// A list of fixed drive in current computer
+	CString m_strInstalledRoot;		// The drive where we have installed
 	int m_iCurrComboIndex;
 	enum {WAIT_TIME = 200};
-	HANDLE m_hThread;			// Monitor thread ID
-	ThreadParam_t m_threadParam;// Parameters passed to monitor thread
-	CStringList m_fileNameList;	// File that need to be extracted from resource
+	HANDLE m_hThread;				// Monitor thread ID
+	ThreadParam_t m_threadParam;	// Parameters passed to monitor thread
+	CStringList m_fileNameList;		// File that need to be extracted from resource
 	CList<DWORD, DWORD> m_rcIdList;	// File's resource ID
+	CStringList m_isoList;			// Record the searched ISO file
+	/* Record the last installation backup directory, in case of installation 
+	 * failure to delete the backup directory */
+	CString m_strBackupDir;
 
 	void DetermineIfInstalled();						// Determine if we have already installed or not
 	BOOL SearchFileUnderAllRoot(LPCTSTR lpFileName);	// Return true on found
 	void UpdateCtrlStatus();							// Enable or disable controls
-	void ProcessExitCode(RUNSISI_HUST::ExitCode_t code);				// Set info according child process exit code
+	void ProcessExitCode(RUNSISI_HUST::ExitCode_t code);// Set info according child process exit code
 	BOOL CreateBackupDir(CString strPath);
 	BOOL ExtractBatFile(CString strPath);	
 	BOOL ExtractGrubFile(CString strPath);
 	BOOL DelBatFile(CString strPath);
 	BOOL DelBackupDir(CString strPath);
 	void InvalidateCtrl(DWORD dwCtrlId);				// Force the control to be repainted
+	/* ISO file search and modify menu.lst related member functions */
+	void SearchIsoFileUnderAllRoot();					// The result will be set in m_isoList
+	void UpdateIsoListCombo();							// Update the m_isoListCombo content
+	void SetWidthIsoListCombo();						// Set the minimum width of m_isoListCombo control
+	BOOL ValidateAllFilesAreReady();					// vmlinuz, initrd.lz and xxx.iso are ready
+	void AppendEntryToMenuLst();						// Append an entry to menu.lst file
 
 	// Generated message map functions
 	//{{AFX_MSG(CGrub4WinDlg)
@@ -72,6 +86,8 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	afx_msg void OnButtonExec();
+	afx_msg void OnDestroy();
+	afx_msg void OnButtonRefresh();
 	//}}AFX_MSG
 	afx_msg LRESULT OnProcessing(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnProcessFinished(WPARAM wParam, LPARAM lParam);

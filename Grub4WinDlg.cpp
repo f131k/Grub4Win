@@ -179,6 +179,7 @@ void CGrub4WinDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CGrub4WinDlg)
+	DDX_Control(pDX, IDC_COMBO_ISO, m_isoListCombo);
 	DDX_Control(pDX, IDC_COMBO_DRV, m_drvListCombo);
 	//}}AFX_DATA_MAP
 }
@@ -189,6 +190,8 @@ BEGIN_MESSAGE_MAP(CGrub4WinDlg, CDialog)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_BUTTON_EXEC, OnButtonExec)
+	ON_WM_DESTROY()
+	ON_BN_CLICKED(IDC_BUTTON_REFRESH, OnButtonRefresh)
 	//}}AFX_MSG_MAP
 	ON_MESSAGE(UWM_PROCESSING, OnProcessing)
 	ON_MESSAGE(UWM_PROCESS_FINISHED, OnProcessFinished)
@@ -250,6 +253,14 @@ BOOL CGrub4WinDlg::OnInitDialog()
 
 	// Set default
 	m_drvListCombo.SetCurSel(m_iCurrComboIndex);
+
+	/* Set m_isoListCombo */
+	/* Just for beautiful, if not comment out, then the m_isoListCombo has nothing! */
+	// if (!m_bInstalled)
+	{	
+		SearchIsoFileUnderAllRoot();
+		UpdateIsoListCombo();
+	}
 
 	// Update control status
 	UpdateCtrlStatus();
@@ -379,6 +390,10 @@ void CGrub4WinDlg::UpdateCtrlStatus()
 		/* Enable or disable control */
 		m_drvListCombo.EnableWindow(TRUE);
 		InvalidateCtrl(IDC_COMBO_DRV);
+		m_isoListCombo.EnableWindow(TRUE);
+		InvalidateCtrl(IDC_COMBO_ISO);
+		GetDlgItem(IDC_BUTTON_REFRESH)->EnableWindow(TRUE);
+		InvalidateCtrl(IDC_BUTTON_REFRESH);
 		GetDlgItem(IDC_BUTTON_EXEC)->EnableWindow(TRUE);
 		InvalidateCtrl(IDC_BUTTON_EXEC);
 	}
@@ -400,6 +415,10 @@ void CGrub4WinDlg::UpdateCtrlStatus()
 		/* Enable or disable control */
 		m_drvListCombo.EnableWindow(FALSE);
 		InvalidateCtrl(IDC_COMBO_DRV);
+		m_isoListCombo.EnableWindow(FALSE);
+		InvalidateCtrl(IDC_COMBO_ISO);
+		GetDlgItem(IDC_BUTTON_REFRESH)->EnableWindow(FALSE);
+		InvalidateCtrl(IDC_BUTTON_REFRESH);
 		GetDlgItem(IDC_BUTTON_EXEC)->EnableWindow(TRUE);
 		InvalidateCtrl(IDC_BUTTON_EXEC);
 	}	
@@ -453,7 +472,7 @@ void CGrub4WinDlg::ProcessExitCode(RUNSISI_HUST::ExitCode_t code)
 void CGrub4WinDlg::OnButtonExec() 
 {
 	// TODO: Add your control notification handler code here
-	
+	BOOL bOk = TRUE;
 	// Get current selected index
 	int count = m_drvListCombo.GetCount();
 	if (count == CB_ERR)
@@ -467,6 +486,8 @@ void CGrub4WinDlg::OnButtonExec()
 
 	CString strBackupPath(strDrv);
 	strBackupPath += BACKUP_DIR;
+	/* Record backup directory path */
+	m_strBackupDir = strBackupPath;
 
 #define STR_INSTALL _T("install")
 #define STR_UNINSTALL _T("uninstall")
@@ -478,12 +499,26 @@ void CGrub4WinDlg::OnButtonExec()
 	strExec += m_bInstalled ? STR_UNINSTALL : STR_INSTALL;
 
 	/* Create backup directory and related files */
-	BOOL bOk = TRUE;
 	if (!m_bInstalled)
 	{	
 		/* Install */
 		bOk = CreateBackupDir(strBackupPath) && 
 			ExtractBatFile(strBackupPath) && ExtractGrubFile(strBackupPath);
+		/* Modify menu.lst */
+		if (bOk && !ValidateAllFilesAreReady())
+		{
+			/* TODO: Converto to a helper member function */
+			/* Update result static text */
+			CString strText;
+			strText.LoadString(IDS_LINUX_FILE_NOT_READY);
+			GetDlgItem(IDC_STATIC_RESULT)->SetWindowText(strText);
+			InvalidateCtrl(IDC_STATIC_RESULT);
+			DelBackupDir(m_strBackupDir);
+			return;
+		}		
+		/* If our installation fails, then if we install again the files will be deleted first! */
+		/* Everything is OK */
+		AppendEntryToMenuLst();
 	}
 	else
 	{
@@ -495,8 +530,10 @@ void CGrub4WinDlg::OnButtonExec()
 	{
 		bOk = FALSE;
 		// We are processing, update control status temporally
-		GetDlgItem(IDC_COMBO_DRV)->EnableWindow(FALSE);
+		m_drvListCombo.EnableWindow(FALSE);
 		InvalidateCtrl(IDC_COMBO_DRV);
+		m_isoListCombo.EnableWindow(FALSE);
+		InvalidateCtrl(IDC_COMBO_ISO);
 		GetDlgItem(IDC_BUTTON_EXEC)->EnableWindow(FALSE);
 		InvalidateCtrl(IDC_BUTTON_EXEC);
 		GetDlgItem(IDOK)->EnableWindow(FALSE);
@@ -525,6 +562,8 @@ void CGrub4WinDlg::OnButtonExec()
 	}
 	if (!bOk)
 	{
+		/* Delete backup directory */
+		DelBackupDir(m_strBackupDir);
 		/* Update result static text */
 		CString strText;
 		strText.LoadString(IDS_LAUNCH_FAILURE);
@@ -688,4 +727,200 @@ BOOL CGrub4WinDlg::DelBatFile(CString strPath)
 	strBatFullPathName += m_strBatName;
 	DeleteFile(strBatFullPathName);
 	return TRUE;
+}
+
+void CGrub4WinDlg::SearchIsoFileUnderAllRoot()
+{
+	/* Clear all data in m_isoList */
+	m_isoList.RemoveAll();
+	/* Loop over all fixed drive */
+	for (drv_list_t::const_iterator iter = m_drvList.begin(); 
+	iter != m_drvList.end(); iter++)
+	{
+		WIN32_FIND_DATA findData = {0};
+		CString strPattern(iter->c_str());
+		strPattern += _T("*.iso");
+		HANDLE hFind = FindFirstFile(strPattern, &findData);
+		if (hFind != INVALID_HANDLE_VALUE)
+		{
+			do 
+			{
+				if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+				{
+					continue;
+				}
+				CString strIso(iter->c_str());
+				strIso += findData.cFileName;
+				m_isoList.AddTail(strIso);
+			} while (FindNextFile(hFind, &findData));
+			FindClose(hFind);
+		}
+	}
+}
+
+void CGrub4WinDlg::UpdateIsoListCombo()
+{
+	/* Set m_isoListCombo content */
+	m_isoListCombo.ResetContent();	// Clear all content
+	POSITION pos = m_isoList.GetHeadPosition();
+	while (pos)
+	{
+		m_isoListCombo.AddString(m_isoList.GetNext(pos));
+	}
+	/* Set default selection */
+	m_isoListCombo.SetCurSel(0);
+	/* Set m_isoListCombo content width */
+	SetWidthIsoListCombo();
+}
+
+void CGrub4WinDlg::SetWidthIsoListCombo()
+{
+	// Find the longest string in the combo box.
+	CString    str;
+	CSize      sz;
+	int        dx = 0;
+	TEXTMETRIC tm;
+	CDC*       pDC = m_isoListCombo.GetDC();
+	CFont*     pFont = m_isoListCombo.GetFont();
+	
+	// Select the listbox font, save the old font
+	CFont* pOldFont = pDC->SelectObject(pFont);
+	// Get the text metrics for avg char width
+	pDC->GetTextMetrics(&tm);
+	
+	for (int i = 0; i < m_isoListCombo.GetCount(); i++)
+	{
+		m_isoListCombo.GetLBText(i, str);
+		sz = pDC->GetTextExtent(str);
+		
+		// Add the avg width to prevent clipping
+		sz.cx += tm.tmAveCharWidth;
+		
+		if (sz.cx > dx)
+			dx = sz.cx;
+	}
+	// Select the old font back into the DC
+	pDC->SelectObject(pOldFont);
+	m_isoListCombo.ReleaseDC(pDC);
+	
+	// Adjust the width for the vertical scroll bar and the left and right border.
+	//dx += ::GetSystemMetrics(SM_CXVSCROLL) + 2*::GetSystemMetrics(SM_CXEDGE);
+	
+	// Set the width of the list box so that every item is completely visible.
+	m_isoListCombo.SetDroppedWidth(dx);
+}
+
+BOOL CGrub4WinDlg::ValidateAllFilesAreReady()
+{
+	BOOL bOk = TRUE;
+	/* Get selected ISO file full path name */
+	int count = m_isoListCombo.GetCount();
+	if (count == 0)
+	{
+		return FALSE;
+	}
+
+	int curr = m_isoListCombo.GetCurSel();
+	CString strIsoName;
+	m_isoListCombo.GetLBText(curr, strIsoName);
+	/* Get the drive root name */
+	CString strRoot = strIsoName.Left(3);
+	/* Format the vmlinuz full path name */
+	CString strVmlinuz(strRoot);
+	strVmlinuz += VMLINUZ;
+	/* Format the initrd.lz full path name */
+	CString strInitrdLz(strRoot);
+	strInitrdLz += INITRD_LZ;
+	/* Find */
+	WIN32_FIND_DATA findData = {0};
+	HANDLE hFind = FindFirstFile(strVmlinuz, &findData);
+	if (hFind == INVALID_HANDLE_VALUE)
+	{
+		bOk = FALSE;
+	}
+	else
+	{
+		FindClose(hFind);
+		hFind = FindFirstFile(strInitrdLz, &findData);
+		if (hFind == INVALID_HANDLE_VALUE)
+		{
+			bOk = FALSE;
+		}
+		else
+		{
+			FindClose(hFind);
+		}
+	}
+
+	return bOk;
+}
+
+void CGrub4WinDlg::AppendEntryToMenuLst()
+{
+	/* menu.lst is in backup directory right now */
+	/* Get backup directory */
+	CString strBackupDir;
+	int curr = m_drvListCombo.GetCurSel();
+	m_drvListCombo.GetLBText(curr, strBackupDir);
+	strBackupDir += BACKUP_DIR;
+	/* Format menu.lst full path name */
+	CString strMenuLst(strBackupDir);
+	strMenuLst += _T("\\");
+	strMenuLst += MENU_LST;
+
+	CString strIsoFullPathName;
+	curr = m_isoListCombo.GetCurSel();
+	m_isoListCombo.GetLBText(curr, strIsoFullPathName);
+	/* Get vmlinuz and initrd.lz drive root */
+	CString strRoot = strIsoFullPathName.Left(1);
+	int index = strIsoFullPathName.Find("\\");
+	/* Get ISO file name */
+	CString strIsoName = strIsoFullPathName.Right(
+		strIsoFullPathName.GetLength() - index - 1);
+
+
+	/* Convert root drive letter to index in the manner of grub */
+	strRoot.MakeUpper();
+	if (strRoot == "C")
+	{
+		index = 0;
+	}
+	else
+	{
+		index = strRoot[0] - 'D' + 4;
+	}
+	
+	/* Format entry content */
+	CString strContent;
+	strContent.Format(_T("title GNU/Linux Live CD\nroot (hd0,%d)\n")
+		_T("kernel /vmlinuz boot=casper iso-scan/filename=/%s\n")
+		_T("initrd /initrd.lz"), index, strIsoName);
+
+	/* Append the content to the end of menu.lst */
+	FILE* pMenuLst = 0;
+	pMenuLst = _tfopen(strMenuLst, _T("a"));
+	ASSERT(pMenuLst != 0);
+	size_t size = fwrite((void*)strContent.GetBuffer(0), 1, 
+		sizeof(TCHAR) * strContent.GetLength(), pMenuLst);
+	ASSERT(size == strContent.GetLength());
+	/* Close file */
+	fclose(pMenuLst);
+}
+
+void CGrub4WinDlg::OnDestroy() 
+{
+	CDialog::OnDestroy();
+	
+	// TODO: Add your message handler code here
+	if (!m_bInstalled)
+	{
+		DelBackupDir(m_strBackupDir);	
+	}
+}
+
+void CGrub4WinDlg::OnButtonRefresh() 
+{
+	// TODO: Add your control notification handler code here
+	SearchIsoFileUnderAllRoot();
+	UpdateIsoListCombo();
 }

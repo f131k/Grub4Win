@@ -18,6 +18,7 @@
 #define IDS_LAUNCH_FAILURE              111
 #define IDS_NOT_SUPPORTED_SYSTEM        112
 #define IDS_INVALID_PARAMETER           113
+#define IDS_LINUX_FILE_NOT_READY        114
 #define IDR_MAINFRAME                   128
 #define IDR_EXEC_BAT                    136
 #define IDR_LDR                         137
@@ -32,14 +33,16 @@
 #define IDC_STATIC_ABOUT1               1006
 #define IDC_STATIC_ABOUT2               1007
 #define IDC_STATIC_PLACE_HOLDER         1008
+#define IDC_COMBO_ISO                   1009
+#define IDC_BUTTON_REFRESH              1010
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        143
+#define _APS_NEXT_RESOURCE_VALUE        144
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1009
+#define _APS_NEXT_CONTROL_VALUE         1011
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

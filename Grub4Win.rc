@@ -87,21 +87,25 @@ BEGIN
     ICON            IDR_MAINFRAME,IDC_STATIC,14,10,20,20
 END
 
-IDD_GRUB4WIN_DIALOG DIALOGEX 0, 0, 178, 71
+IDD_GRUB4WIN_DIALOG DIALOGEX 0, 0, 222, 73
 STYLE DS_MODALFRAME | WS_MINIMIZEBOX | WS_POPUP | WS_VISIBLE | WS_CAPTION | 
     WS_SYSMENU
 EXSTYLE WS_EX_APPWINDOW
 CAPTION "Grub4Win"
 FONT 9, "宋体"
 BEGIN
-    LTEXT           "Status",IDC_STATIC_STATUS,18,47,29,8
-    DEFPUSHBUTTON   "退出",IDOK,112,45,50,14
-    COMBOBOX        IDC_COMBO_DRV,96,11,42,72,CBS_DROPDOWNLIST | CBS_SORT | 
+    LTEXT           "Status",IDC_STATIC_STATUS,10,54,29,8
+    DEFPUSHBUTTON   "退出",IDOK,155,52,50,14
+    COMBOBOX        IDC_COMBO_DRV,53,9,35,50,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "选择安装分区：",IDC_STATIC_DRV,18,13,64,8
-    PUSHBUTTON      "安装",IDC_BUTTON_EXEC,52,45,50,14
-    LTEXT           "Static",IDC_STATIC_RESULT,18,30,146,8
-    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,17,40,147,1
+    LTEXT           "安装分区：",IDC_STATIC_DRV,10,11,41,8
+    PUSHBUTTON      "安装",IDC_BUTTON_EXEC,67,52,50,14
+    LTEXT           "Static",IDC_STATIC_RESULT,10,28,91,19
+    COMBOBOX        IDC_COMBO_ISO,112,31,64,54,CBS_DROPDOWNLIST | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "刷新",IDC_BUTTON_REFRESH,184,30,27,14
+    LTEXT           "选择liveCD镜像（请将ISO文件放在硬盘根目录）：",
+                    IDC_STATIC,111,9,104,18
 END
 
 
@@ -112,8 +116,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,2
- PRODUCTVERSION 1,0,0,2
+ FILEVERSION 1,0,0,3
+ PRODUCTVERSION 1,0,0,3
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -131,14 +135,14 @@ BEGIN
             VALUE "Comments", "http://www.cppblog.com/runsisi\0"
             VALUE "CompanyName", "runsisi@163.com\0"
             VALUE "FileDescription", "Windows下安装GRUB\0"
-            VALUE "FileVersion", "1, 0, 0, 2\0"
+            VALUE "FileVersion", "1, 0, 0, 3\0"
             VALUE "InternalName", "Grub4Win\0"
             VALUE "LegalCopyright", "runsisi@163.com Copyright (C) 2011\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "Grub4Win.EXE\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "Grub4Win\0"
-            VALUE "ProductVersion", "1, 0, 0, 2\0"
+            VALUE "ProductVersion", "1, 0, 0, 3\0"
             VALUE "SpecialBuild", "\0"
         END
     END
@@ -170,9 +174,9 @@ BEGIN
     IDD_GRUB4WIN_DIALOG, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 171
+        RIGHTMARGIN, 215
         TOPMARGIN, 7
-        BOTTOMMARGIN, 64
+        BOTTOMMARGIN, 66
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -203,7 +207,7 @@ IDR_MENU_LST            BINARY  DISCARDABLE     "res\\menu.lst"
 STRINGTABLE DISCARDABLE 
 BEGIN
     IDS_ABOUTBOX            "&About Grub4Win..."
-    IDS_CHOOSE_DRV          "请选择安装分区："
+    IDS_CHOOSE_DRV          "安装分区："
     IDS_INSTALLED_DRV       "已安装在："
     IDS_EXEC_INSTALL        "安装"
     IDS_EXEC_UNINSTALL      "卸载"
@@ -219,6 +223,7 @@ STRINGTABLE DISCARDABLE
 BEGIN
     IDS_NOT_SUPPORTED_SYSTEM "不支持的操作系统"
     IDS_INVALID_PARAMETER   "错误的参数"
+    IDS_LINUX_FILE_NOT_READY "请将vmlinuz和initrd.lz拷贝至ISO所在根目录"
 END
 
 #endif    // Chinese (P.R.C.) resources
