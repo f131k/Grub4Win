@@ -46,6 +46,23 @@ BOOL CGrub4WinApp::InitInstance()
 	//  of your final executable, you should remove from the following
 	//  the specific initialization routines you do not need.
 
+	const TCHAR* tszEvent = TEXT("{0FC3E696-387C-4a04-8CDF-EF501BAE29AD}");
+	//const TCHAR* tszWindowClassName = "YiGe_RUNSISI_HUST";
+	const TCHAR* tszWindowTitleName = "Grub4Win";
+	HANDLE hEvent = CreateEvent(0, 0, 0, tszEvent);
+	DWORD dwErr = GetLastError();
+	if (dwErr == ERROR_ALREADY_EXISTS)
+	{
+		HWND hWindow = ::FindWindow(0, tszWindowTitleName);
+		if (hWindow)
+		{
+			::FlashWindow(hWindow, TRUE);
+			//::ShowWindow(hWindow, SW_SHOWNORMAL);
+			//BOOL bOk = ::SetWindowPos(hWindow, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+			return TRUE;
+		}
+	}
+
 #ifdef _AFXDLL
 	Enable3dControls();			// Call this when using MFC in a shared DLL
 #else

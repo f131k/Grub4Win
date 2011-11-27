@@ -73,32 +73,33 @@ IDR_MAINFRAME           ICON    DISCARDABLE     "res\\Grub4Win.ico"
 // Dialog
 //
 
-IDD_ABOUTBOX DIALOG DISCARDABLE  0, 0, 235, 55
+IDD_ABOUTBOX DIALOG DISCARDABLE  0, 0, 211, 44
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "About Grub4Win"
 FONT 8, "MS Sans Serif"
 BEGIN
-    ICON            IDR_MAINFRAME,IDC_STATIC,11,17,20,20
+    ICON            IDR_MAINFRAME,IDC_STATIC,11,11,21,20
     LTEXT           "Grub4Win Version 1.0",IDC_STATIC,40,10,119,8,
                     SS_NOPREFIX
-    LTEXT           "Copyright (C) 2011",IDC_STATIC,40,25,119,8
-    DEFPUSHBUTTON   "OK",IDOK,178,7,50,14,WS_GROUP
+    LTEXT           "runsisi@HUST Copyright (C) 2011",IDC_STATIC,40,25,119,8
+    DEFPUSHBUTTON   "OK",IDOK,154,7,50,14,WS_GROUP
 END
 
-IDD_GRUB4WIN_DIALOG DIALOGEX 0, 0, 294, 200
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+IDD_GRUB4WIN_DIALOG DIALOGEX 0, 0, 178, 71
+STYLE DS_MODALFRAME | WS_MINIMIZEBOX | WS_POPUP | WS_VISIBLE | WS_CAPTION | 
+    WS_SYSMENU
 EXSTYLE WS_EX_APPWINDOW
 CAPTION "Grub4Win"
-FONT 8, "SimSun-ExtB"
+FONT 9, "宋体"
 BEGIN
-    DEFPUSHBUTTON   "退出",IDOK,213,172,50,14
-    COMBOBOX        IDC_COMBO_DRV,85,16,42,72,CBS_DROPDOWNLIST | CBS_SORT | 
+    LTEXT           "Status",IDC_STATIC_STATUS,18,47,29,8
+    DEFPUSHBUTTON   "退出",IDOK,112,45,50,14
+    COMBOBOX        IDC_COMBO_DRV,96,11,42,72,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "选择安装分区：",IDC_STATIC_DRV,25,19,57,8
-    EDITTEXT        IDC_EDIT_OUTPUT,24,55,245,105,ES_MULTILINE | 
-                    ES_AUTOHSCROLL | ES_READONLY
-    LTEXT           "执行结果：",IDC_STATIC,26,40,41,8
-    PUSHBUTTON      "安装",IDC_BUTTON_EXEC,145,172,50,14
+    LTEXT           "选择安装分区：",IDC_STATIC_DRV,18,13,64,8
+    PUSHBUTTON      "安装",IDC_BUTTON_EXEC,52,45,50,14
+    LTEXT           "Static",IDC_STATIC_RESULT,18,30,153,8
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,17,40,147,1
 END
 
 
@@ -125,16 +126,16 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "Comments", "\0"
-            VALUE "CompanyName", "\0"
-            VALUE "FileDescription", "Grub4Win MFC Application\0"
+            VALUE "Comments", "http://www.cppblog.com/runsisi\0"
+            VALUE "CompanyName", "runsisi@163.com\0"
+            VALUE "FileDescription", "Windows下安装GRUB\0"
             VALUE "FileVersion", "1, 0, 0, 1\0"
             VALUE "InternalName", "Grub4Win\0"
-            VALUE "LegalCopyright", "Copyright (C) 2011\0"
+            VALUE "LegalCopyright", "runsisi@163.com Copyright (C) 2011\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "Grub4Win.EXE\0"
             VALUE "PrivateBuild", "\0"
-            VALUE "ProductName", "Grub4Win Application\0"
+            VALUE "ProductName", "Grub4Win\0"
             VALUE "ProductVersion", "1, 0, 0, 1\0"
             VALUE "SpecialBuild", "\0"
         END
@@ -159,21 +160,38 @@ BEGIN
     IDD_ABOUTBOX, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 228
+        RIGHTMARGIN, 204
         TOPMARGIN, 7
-        BOTTOMMARGIN, 48
+        BOTTOMMARGIN, 37
     END
 
     IDD_GRUB4WIN_DIALOG, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 287
+        RIGHTMARGIN, 171
         TOPMARGIN, 7
-        BOTTOMMARGIN, 193
+        BOTTOMMARGIN, 64
     END
 END
 #endif    // APSTUDIO_INVOKED
 
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// BINARY
+//
+
+IDR_EXEC_BAT            BINARY  DISCARDABLE     "res\\exec.bat"
+IDR_LDR                 BINARY  DISCARDABLE     "res\\grldr"
+IDR_LDR_MBR             BINARY  DISCARDABLE     "res\\grldr.mbr"
+IDR_MENU_LST            BINARY  DISCARDABLE     "res\\menu.lst"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// 24
+//
+
+1                       24      DISCARDABLE     "res\\uac.manifest"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -183,6 +201,22 @@ END
 STRINGTABLE DISCARDABLE 
 BEGIN
     IDS_ABOUTBOX            "&About Grub4Win..."
+    IDS_CHOOSE_DRV          "请选择安装分区："
+    IDS_INSTALLED_DRV       "已安装在："
+    IDS_EXEC_INSTALL        "安装"
+    IDS_EXEC_UNINSTALL      "卸载"
+    IDS_READY               "就绪"
+    IDS_EXIT                "退出"
+    IDS_SUCCESS             "操作成功"
+    IDS_FAILURE             "操作失败"
+    IDS_FILENOTFIND         "请确认已拷贝所有文件"
+    IDS_LAUNCH_FAILURE      "执行失败：请确认是否阻止了新文件生成"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_NOT_SUPPORTED_SYSTEM "不支持的操作系统"
+    IDS_INVALID_PARAMETER   "错误的参数"
 END
 
 #endif    // Chinese (P.R.C.) resources

@@ -8,14 +8,19 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
-#include "Redirect/DemoRedir.h"
 #include "diskinfo.h"
+#include "ChildProcess.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CGrub4WinDlg dialog
 
+#define BACKUP_DIR _T("RUNSISI.{0FC3E696-387C-4a04-8CDF-EF501BAE29AD}")
+#define INSTALLED_FLAG_FILE_NAME _T("boot.{0FC3E696-387C-4a04-8CDF-EF501BAE29AD}")
 #define EXEC_BAT_NAME _T("exec.bat")
-#define INSTALLED_FLAG_FILE_NAME _T("{0FC3E696-387C-4a04-8CDF-EF501BAE29AD}.boot.runsisi")
+#define LDR _T("grldr")
+#define LDR_MBR _T("grldr.mbr")
+#define MENU_LST _T("menu.lst")
+#define RC_TYPE _T("BINARY")
 
 class CGrub4WinDlg : public CDialog
 {
@@ -38,15 +43,26 @@ public:
 // Implementation
 protected:
 	HICON m_hIcon;
-	CDemoRedirector m_redir;	// Console redirector
-	BOOL m_bInstall;			// If we will install or uninstall
+	BOOL m_bInstalled;			// Indicate if we have already installed or not
 	CString m_strBatName;		// The bat file name we want to execute
 	drv_list_t m_drvList;		// A list of fixed drive in current computer
 	CString m_strInstalledRoot;	// The drive where we have installed
 	int m_iCurrComboIndex;
+	enum {WAIT_TIME = 200};
+	HANDLE m_hThread;			// Monitor thread ID
+	ThreadParam_t m_threadParam;// Parameters passed to monitor thread
+	CStringList m_fileNameList;	// File that need to be extracted from resource
+	CList<DWORD, DWORD> m_rcIdList;	// File's resource ID
 
-	void DetermineIfInstalled();
-	BOOL SearchFileUnderAllRoot(LPCTSTR lpFileName);
+	void DetermineIfInstalled();						// Determine if we have already installed or not
+	BOOL SearchFileUnderAllRoot(LPCTSTR lpFileName);	// Return true on found
+	void UpdateCtrlStatus();							// Enable or disable controls
+	void ProcessExitCode(ExitCode_t code);				// Set info according child process exit code
+	BOOL CreateBackupDir(CString strPath);
+	BOOL ExtractBatFile(CString strPath);	
+	BOOL ExtractGrubFile(CString strPath);
+	BOOL DelBatFile(CString strPath);
+	BOOL DelBackupDir(CString strPath);
 
 	// Generated message map functions
 	//{{AFX_MSG(CGrub4WinDlg)
@@ -56,6 +72,8 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	afx_msg void OnButtonExec();
 	//}}AFX_MSG
+	afx_msg LRESULT OnProcessing(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnProcessFinished(WPARAM wParam, LPARAM lParam);
 	DECLARE_MESSAGE_MAP()
 };
 

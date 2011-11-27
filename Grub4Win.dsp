@@ -42,7 +42,7 @@ RSC=rc.exe
 # PROP Intermediate_Dir "Release"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_AFXDLL" /Yu"stdafx.h" /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /Yu"stdafx.h" /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /FR /Yu"stdafx.h" /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x804 /d "NDEBUG" /d "_AFXDLL"
@@ -90,11 +90,19 @@ LINK32=link.exe
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=.\Redirect\DemoRedir.cpp
+SOURCE=.\ChildProcess.cpp
 # End Source File
 # Begin Source File
 
 SOURCE=.\diskinfo.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\exec.bat
+# End Source File
+# Begin Source File
+
+SOURCE=.\ExtractFile.cpp
 # End Source File
 # Begin Source File
 
@@ -110,10 +118,6 @@ SOURCE=.\Grub4WinDlg.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\Redirect\Redir.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=.\StdAfx.cpp
 # ADD CPP /Yc"stdafx.h"
 # End Source File
@@ -123,11 +127,15 @@ SOURCE=.\StdAfx.cpp
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=.\Redirect\DemoRedir.h
+SOURCE=.\ChildProcess.h
 # End Source File
 # Begin Source File
 
 SOURCE=.\diskinfo.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\ExtractFile.h
 # End Source File
 # Begin Source File
 
@@ -136,10 +144,6 @@ SOURCE=.\Grub4Win.h
 # Begin Source File
 
 SOURCE=.\Grub4WinDlg.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\Redirect\Redir.h
 # End Source File
 # Begin Source File
 
@@ -155,13 +159,45 @@ SOURCE=.\StdAfx.h
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 # Begin Source File
 
+SOURCE=.\res\binary3.bin
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\exec_bat.bin
+# End Source File
+# Begin Source File
+
 SOURCE=.\res\Grub4Win.ico
 # End Source File
 # Begin Source File
 
 SOURCE=.\res\Grub4Win.rc2
 # End Source File
+# Begin Source File
+
+SOURCE=.\res\mbr.bin
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\menu_lst.bin
+# End Source File
 # End Group
+# Begin Source File
+
+SOURCE=.\res\grldr
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\grldr.mbr
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\manifest
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\menu.lst
+# End Source File
 # Begin Source File
 
 SOURCE=.\ReadMe.txt

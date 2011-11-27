@@ -4,6 +4,8 @@
 #include "stdafx.h"
 #include "Grub4Win.h"
 #include "Grub4WinDlg.h"
+#include <PROCESS.H>
+#include "ExtractFile.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -61,16 +63,26 @@ END_MESSAGE_MAP()
 
 CGrub4WinDlg::CGrub4WinDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CGrub4WinDlg::IDD, pParent), 
-	m_bInstall(TRUE), 
+	m_bInstalled(FALSE), 
 	m_strBatName(EXEC_BAT_NAME), 
 	m_strInstalledRoot(_T("")), 
-	m_iCurrComboIndex(0)
+	m_iCurrComboIndex(0), 
+	m_hThread(INVALID_HANDLE_VALUE)
 {
 	//{{AFX_DATA_INIT(CGrub4WinDlg)
 		// NOTE: the ClassWizard will add member initialization here
 	//}}AFX_DATA_INIT
 	// Note that LoadIcon does not require a subsequent DestroyIcon in Win32
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+
+	/* Setup file name list */
+	m_fileNameList.AddTail(LDR);
+	m_fileNameList.AddTail(LDR_MBR);
+	m_fileNameList.AddTail(MENU_LST);
+	/* Setup file resource ID list */
+	m_rcIdList.AddTail(IDR_LDR);
+	m_rcIdList.AddTail(IDR_LDR_MBR);
+	m_rcIdList.AddTail(IDR_MENU_LST);
 }
 
 void CGrub4WinDlg::DoDataExchange(CDataExchange* pDX)
@@ -88,6 +100,8 @@ BEGIN_MESSAGE_MAP(CGrub4WinDlg, CDialog)
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_BUTTON_EXEC, OnButtonExec)
 	//}}AFX_MSG_MAP
+	ON_MESSAGE(UWM_PROCESSING, OnProcessing)
+	ON_MESSAGE(UWM_PROCESS_FINISHED, OnProcessFinished)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -121,6 +135,13 @@ BOOL CGrub4WinDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 	
 	// TODO: Add extra initialization here
+	CString strText;
+	strText.LoadString(IDS_EXIT);
+	GetDlgItem(IDOK)->SetWindowText(strText);
+
+	/* Set result static control text to null */
+	GetDlgItem(IDC_STATIC_RESULT)->SetWindowText(_T(""));
+
 	if (GetDriveList(m_drvList) == ERROR_SUCCESS)
 	{
 		// Add to combo box
@@ -140,13 +161,8 @@ BOOL CGrub4WinDlg::OnInitDialog()
 	// Set default
 	m_drvListCombo.SetCurSel(m_iCurrComboIndex);
 
-	// Already installed, disable the combo box
-	if (!m_bInstall)
-	{
-		m_drvListCombo.EnableWindow(FALSE);
-		GetDlgItem(IDC_STATIC_DRV)->SetWindowText(_T("已安装在："));
-		GetDlgItem(IDC_BUTTON_EXEC)->SetWindowText(_T("卸载"));
-	}	
+	// Update control status
+	UpdateCtrlStatus();
 	
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -241,15 +257,81 @@ BOOL CGrub4WinDlg::SearchFileUnderAllRoot(LPCTSTR lpFileName)
 void CGrub4WinDlg::DetermineIfInstalled()
 {
 	// Search for flag file(INSTALLED_FLAG_FILE_NAME) to determine if already installed
-	m_bInstall = !(SearchFileUnderAllRoot(INSTALLED_FLAG_FILE_NAME));
+	m_bInstalled = SearchFileUnderAllRoot(BACKUP_DIR _T("\\") INSTALLED_FLAG_FILE_NAME);
+}
+
+void CGrub4WinDlg::UpdateCtrlStatus()
+{
+	/* Window text that displayed on controls */
+	CString strText;
+
+	if (!m_bInstalled)	// Have not installed
+	{
+		/* Set control window text */
+		strText.LoadString(IDS_CHOOSE_DRV);
+		GetDlgItem(IDC_STATIC_DRV)->SetWindowText(strText);
+		strText.LoadString(IDS_READY);
+		GetDlgItem(IDC_STATIC_STATUS)->SetWindowText(strText);
+		strText.LoadString(IDS_EXEC_INSTALL);
+		GetDlgItem(IDC_BUTTON_EXEC)->SetWindowText(strText);		
+
+		/* Enable or disable control */
+		m_drvListCombo.EnableWindow(TRUE);
+		GetDlgItem(IDC_BUTTON_EXEC)->EnableWindow(TRUE);
+	}
+	else	// Installed
+	{
+		/* Set control window text */
+		strText.LoadString(IDS_INSTALLED_DRV);
+		GetDlgItem(IDC_STATIC_DRV)->SetWindowText(strText);
+		strText.LoadString(IDS_READY);
+		GetDlgItem(IDC_STATIC_STATUS)->SetWindowText(strText);
+		strText.LoadString(IDS_EXEC_UNINSTALL);
+		GetDlgItem(IDC_BUTTON_EXEC)->SetWindowText(strText);
+		
+		/* Enable or disable control */
+		m_drvListCombo.EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_EXEC)->EnableWindow(TRUE);
+	}	
+	GetDlgItem(IDOK)->EnableWindow(TRUE);
+}
+
+void CGrub4WinDlg::ProcessExitCode(ExitCode_t code)
+{
+	CString strText;
+	if (code == Success)
+	{
+		strText.LoadString(IDS_SUCCESS);
+	}
+	else
+	{	
+		strText.LoadString(IDS_FAILURE);
+		CString strTmp;
+		if (code == FileNotFound)
+		{
+			strTmp.LoadString(IDS_FILENOTFIND);
+			strText += _T(": ");
+			strText += strTmp;
+		}
+		else if (code == NotSupportedSystem)
+		{
+			strTmp.LoadString(IDS_NOT_SUPPORTED_SYSTEM);
+			strText += _T(": ");
+			strText += strTmp;
+		}
+		else if (code == InvalidParameter)
+		{
+			strTmp.LoadString(IDS_INVALID_PARAMETER);
+			strText += _T(": ");
+			strText += strTmp;
+		}
+	}
+	GetDlgItem(IDC_STATIC_RESULT)->SetWindowText(strText);
 }
 
 void CGrub4WinDlg::OnButtonExec() 
 {
 	// TODO: Add your control notification handler code here
-	m_redir.m_pWnd = (CEdit*) GetDlgItem(IDC_EDIT_OUTPUT);
-	m_redir.m_pWnd->SetWindowText(_T(""));
-	m_redir.Close();
 	
 	// Get current selected index
 	int count = m_drvListCombo.GetCount();
@@ -262,19 +344,220 @@ void CGrub4WinDlg::OnButtonExec()
 	CString strDrv;
 	m_drvListCombo.GetLBText(curr, strDrv);
 
+	CString strBackupPath(strDrv);
+	strBackupPath += BACKUP_DIR;
+
 #define STR_INSTALL _T("install")
 #define STR_UNINSTALL _T("uninstall")
 	// Make execution sentence
-	CString strExec(m_strBatName);
+	CString strExec(strBackupPath + _T("\\") + m_strBatName);
 	strExec += _T(" ");
 	strExec += strDrv.Left(1);
 	strExec += _T(" ");
-	strExec += m_bInstall ? STR_INSTALL : STR_UNINSTALL;
+	strExec += m_bInstalled ? STR_UNINSTALL : STR_INSTALL;
 
-	if (m_bInstall)
+	/* Create backup directory and related files */
+	BOOL bOk = TRUE;
+	if (!m_bInstalled)
+	{	
+		/* Install */
+		bOk = CreateBackupDir(strBackupPath) && 
+			ExtractBatFile(strBackupPath) && ExtractGrubFile(strBackupPath);
+	}
+	else
 	{
-		GetDlgItem(IDC_COMBO_DRV)->EnableWindow(FALSE);
+		/* Uninstall */
+		bOk = ExtractBatFile(strBackupPath);
 	}
 
-	m_redir.Open(strExec);
+	if (bOk)
+	{
+		bOk = FALSE;
+		// We are processing, update control status temporally
+		GetDlgItem(IDC_COMBO_DRV)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_EXEC)->EnableWindow(FALSE);
+		GetDlgItem(IDOK)->EnableWindow(FALSE);
+		GetDlgItem(IDC_STATIC_RESULT)->SetWindowText(_T(""));
+
+
+		/* Launch child process */
+		HANDLE hChildProcess = INVALID_HANDLE_VALUE;
+		LONG lRet = LaunchBatProcess(hChildProcess, strExec);
+		if (lRet == ERROR_SUCCESS)
+		{
+			bOk = TRUE;
+			/* Construct thread parameter */
+			// Intervals to check if child process already terminated	
+			m_threadParam.hProcess = hChildProcess;
+			m_threadParam.pWnd = this;
+			m_threadParam.dwWaitTime = WAIT_TIME;
+
+			/* Create monitor thread */
+			m_hThread = (HANDLE)_beginthreadex(0, 0, StatusThread, &m_threadParam, 0, 0);
+			/* TODO: Error handler must be added here */
+			ASSERT(m_hThread != 0);
+		}
+	}
+	if (!bOk)
+	{
+		/* Update result static text */
+		CString strText;
+		strText.LoadString(IDS_LAUNCH_FAILURE);
+		GetDlgItem(IDC_STATIC_RESULT)->SetWindowText(strText);
+
+		/* Create file failed or launch child process failed, update control status */
+		UpdateCtrlStatus();
+		DelBackupDir(strBackupPath);
+	}
+}
+
+
+//////////////////////////////////////////////////////////////////////////
+// User defined message handlers
+
+LRESULT CGrub4WinDlg::OnProcessing(WPARAM wParam, LPARAM lParam)
+{
+	CStatic* status = (CStatic*)GetDlgItem(IDC_STATIC_STATUS);
+	ASSERT(status != 0);
+
+	static int iDot = 0;
+	iDot++;
+	if (iDot == 1)
+	{
+		status->SetWindowText(_T("."));
+	}
+	else if (iDot == 2)
+	{
+		status->SetWindowText(_T(".."));
+	}
+	else if (iDot == 3)
+	{
+		status->SetWindowText(_T("..."));
+		iDot = 0;
+	}
+
+	return 0;
+}
+
+LRESULT CGrub4WinDlg::OnProcessFinished(WPARAM wParam, LPARAM lParam)
+{
+	/* Get child process exit code */
+	DWORD dwExitCode = (DWORD)wParam;
+	
+	/* Process exit code */
+	ProcessExitCode((ExitCode_t)dwExitCode);
+
+	/* Close monitor thread handle */
+	CloseHandle(m_hThread);
+	m_hThread = INVALID_HANDLE_VALUE;
+
+	/* Update control status */
+	DetermineIfInstalled();
+	UpdateCtrlStatus();
+
+	int curr = m_drvListCombo.GetCurSel();
+	CString strDrv;
+	m_drvListCombo.GetLBText(curr, strDrv);
+	
+	CString strBackupPath(strDrv);
+	strBackupPath += BACKUP_DIR;
+
+	if (m_bInstalled)
+	{
+		DelBatFile(strBackupPath);
+	}
+	else
+	{
+		DelBackupDir(strBackupPath);
+	}
+
+	return 0;
+}
+
+BOOL CGrub4WinDlg::CreateBackupDir(CString strPath)
+{
+	/* Create backup directory */
+	BOOL bOk = CreateDirectory(strPath, 0);
+	if (!bOk && GetLastError() != ERROR_ALREADY_EXISTS)
+	{
+		return bOk;
+	}
+
+	/* Set directory attribute */
+	SetFileAttributes(strPath, FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM);
+
+	return TRUE;
+}
+
+
+BOOL CGrub4WinDlg::ExtractBatFile(CString strPath)
+{
+	LONG lRet = 0L;
+	CString strBatFullPathName(strPath);
+	strBatFullPathName += _T("\\");
+	strBatFullPathName += m_strBatName;
+	lRet = ExtractFileFromResource(strBatFullPathName, IDR_EXEC_BAT, RC_TYPE);
+	return (lRet == ERROR_SUCCESS);
+}
+
+BOOL CGrub4WinDlg::ExtractGrubFile(CString strPath)
+{
+	/* Extract grub file from app resource */
+	LONG lRet = 0L;
+	POSITION posName = m_fileNameList.GetHeadPosition();
+	CString strFileName;
+	
+	POSITION posId = m_rcIdList.GetHeadPosition();
+	DWORD dwId = 0;
+	
+	BOOL bOk = TRUE;
+	while (posName)
+	{
+		strFileName = m_fileNameList.GetNext(posName);
+		dwId = m_rcIdList.GetNext(posId);
+		lRet = ExtractFileFromResource(strPath + _T("\\") + strFileName, dwId, RC_TYPE);
+		if (lRet != ERROR_SUCCESS)
+		{
+			bOk = FALSE;
+			break;
+		}
+	}
+	
+	return bOk;
+}
+
+BOOL CGrub4WinDlg::DelBackupDir(CString strPath)
+{
+	WIN32_FIND_DATA findData = {0};
+	// Format search file name string
+	CString strPattern(strPath + _T("\\*"));
+	
+	HANDLE hFindHandle = FindFirstFile(strPattern, &findData);
+	if (hFindHandle == INVALID_HANDLE_VALUE)
+	{
+		return FALSE;
+	}
+	do
+	{
+		/* Delete found file */
+		if (_tcscmp(_T("."), findData.cFileName) && _tcscmp(_T(".."), findData.cFileName))
+		{
+			DeleteFile(strPath + _T("\\") + findData.cFileName);
+		}
+	} while (FindNextFile(hFindHandle, &findData));
+
+	RemoveDirectory(strPath);
+
+	// Close find handle
+	FindClose(hFindHandle);
+	return TRUE;
+}
+
+BOOL CGrub4WinDlg::DelBatFile(CString strPath)
+{
+	CString strBatFullPathName(strPath);
+	strBatFullPathName += _T("\\");
+	strBatFullPathName += m_strBatName;
+	DeleteFile(strBatFullPathName);
+	return TRUE;
 }
